@@ -1,13 +1,12 @@
-import logo from './logo.svg';
-import styled from '@emotion/styled';
-import React from 'react';
-import { ThemeProvider } from '@emotion/react';
-import { ReactComponent as DayCloudyIcon } from './images/day-cloudy.svg';
-import { ReactComponent as RainIcon } from './images/rain.svg';
-import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
-import { ReactComponent as RefreshIcon } from './images/refresh.svg';
-import { useState } from 'react';
 
+import { ThemeProvider } from '@emotion/react';
+import React, { useEffect, useState ,useMemo} from 'react';
+import {getMoment,findLocation } from './utils/helpers.js';
+import WeatherCard from './views/WeatherCard';
+import WeatherSetting from './views/WeatherSetting';
+import styled from '@emotion/styled';
+import useWeatherAPI from './hooks/useWeatherAPI';
+const AUTHORIZATION_KEY='CWB-5ABC49B2-13DD-443C-9A99-03B3CAD70E0C';
 const theme = {
   light: {
     backgroundColor: '#ededed',
@@ -27,6 +26,7 @@ const theme = {
     textColor: '#cccccc',
   },
 };
+
 const Container = styled.div`
   background-color: ${({ theme }) => theme.backgroundColor};
   height: 100%;
@@ -35,120 +35,31 @@ const Container = styled.div`
   justify-content: center;
 `;
 
-const WeatherCard = styled.div`
-  position: relative;
-  min-width: 360px;
-  box-shadow: ${({ theme }) => theme.boxShadow};
-  background-color: ${({ theme }) => theme.foregroundColor};
-  box-sizing: border-box;
-  padding: 30px 15px;
-`;
+const App = () => {
+  const [currentTheme, setCurrentTheme] = useState('light');
+  const storageCity = localStorage.getItem('cityName')||'臺北市';
+  const [currentCity,setCurrentCity] = useState(storageCity);
+  const currentLocation = useMemo(()=>findLocation(currentCity),[currentCity]);
+  const {locationName,cityName,sunriseCityName}=currentLocation;
+  const moment = useMemo(()=>getMoment(sunriseCityName),[sunriseCityName]);
+  const [weatherElement,fetchData] = useWeatherAPI({AUTHORIZATION_KEY,locationName,cityName});
+  const [currentPage,setCurrentPage] = useState('WeatherCard');
 
-const Location = styled.div`
-  font-size: 28px;
-  color: ${({ theme }) => theme.titleColor};
-  margin-bottom: 20px;
-`;
-
-const Description = styled.div`
-  font-size: 16px;
-  color: ${({ theme }) => theme.textColor};
-  margin-bottom: 30px;
-`;
-
-const CurrentWeather = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-`;
-
-const Temperature = styled.div`
-  color: ${({ theme }) => theme.temperatureColor};
-  font-size: 96px;
-  font-weight: 300;
-  display: flex;
-`;
-
-const Celsius = styled.div`
-  font-weight: normal;
-  font-size: 42px;
-`;
-
-const AirFlow = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 16x;
-  font-weight: 300;
-  color: ${({ theme }) => theme.textColor};
-  margin-bottom: 20px;
-
-  svg {
-    width: 25px;
-    height: auto;
-    margin-right: 30px;
+  
+  useEffect(()=>setCurrentTheme(moment==='day'?'light':'dark'),[moment]);
+  const handleCurrentPageChange = (currentPage)=>{
+    setCurrentPage(currentPage);
+  };
+  const handleCurrentCityChange=(currentCity)=>{
+    setCurrentCity(currentCity);
   }
-`;
-
-const Rain = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 16x;
-  font-weight: 300;
-  color: ${({ theme }) => theme.textColor};
-
-  svg {
-    width: 25px;
-    height: auto;
-    margin-right: 30px;
-  }
-`;
-
-const DayCloudy = styled(DayCloudyIcon)`
-  flex-basis: 30%;
-`;
-
-const Refresh = styled.div`
-  position: absolute;
-  right: 15px;
-  bottom: 15px;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: flex-end;
-  color: ${({ theme }) => theme.textColor};
-
-  svg {
-    margin-left: 10px;
-    width: 15px;
-    height: 15px;
-    cursor: pointer;
-  }
-`;
-function App() {
-  const [currentTheme,setCurrentTheme] = useState('light');
   return (
     <ThemeProvider theme={theme[currentTheme]}>
-    <Container>
-      <WeatherCard>
-        <Location>Taipei</Location>
-        <Description>Cloudy</Description>
-        <CurrentWeather>
-          <Temperature>23<Celsius>°C</Celsius></Temperature>
-          <DayCloudy />
-        </CurrentWeather>
-        <AirFlow>
-          <AirFlowIcon/>23m/h
-        </AirFlow>
-        <Rain>
-          <RainIcon/>48%
-        </Rain>
-        <Refresh>
-          last update time:19:00<RefreshIcon/>
-        </Refresh>
-      </WeatherCard>
-    </Container>
+      <Container>
+        {currentPage ==='WeatherCard' && (<WeatherCard weatherElement={weatherElement} moment={moment} fetchData={fetchData} handleCurrentPageChange={handleCurrentPageChange} currentCity={currentCity}/>)}
+        {currentPage ==='WeatherSetting' && (<WeatherSetting handleCurrentPageChange={handleCurrentPageChange} handleCurrentCityChange={handleCurrentCityChange}/>)}
+      </Container>
     </ThemeProvider>
   );
-}
-
+};
 export default App;
