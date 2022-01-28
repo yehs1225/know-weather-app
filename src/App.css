@@ -6,7 +6,22 @@
   justify-content: center;
 }
 .weather-card{
-  min-width: 360px;
+  min-width: 240px;
   box-shadow: 0 1px 3px 0 #999999;
   background-color: #f9f9f9;
+}
+
+@media only screen and (min-width: 768px) {
+	.container{
+	  background-color: #ededed;
+	  height: 100%;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	.weather-card{
+	  min-width: 360px;
+	  box-shadow: 0 1px 3px 0 #999999;
+	  background-color: #f9f9f9;
+	}
 }
